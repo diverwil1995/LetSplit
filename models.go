@@ -6,10 +6,12 @@ import (
 	"errors"
 	"time"
 	"unicode"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 type User struct {
-	Id       int    `json:"id"`
+	// Id       int    `json:"id"`
 	Uuid     string `json:"uuid"`
 	Username string `json:"username"`
 	Password string `json:"-"`
@@ -88,26 +90,112 @@ func (u User) HashPassword() ([]byte, error) {
 	}
 	return pwd, nil
 }
+func (u *User) GenerateUuid() {
+	u.Uuid = uuid.NewV4().String()
+}
 
 type Group struct {
-	Id     int    `json:"id"`
-	Uuid   string `json:"uuid"`
-	UserId int    `json:"user_id"`
-	Title  string `json:"title"`
+	// Id     int    `json:"id"`
+	Uuid     string `json:"uuid"`
+	UserUuid string `json:"user_uuid"`
+	Title    string `json:"title"`
 }
+
+var (
+	ErrUserUuidEmpty = errors.New("user_uuid can't be empty")
+	ErrTitleEmpty    = errors.New("title can't be empty")
+)
+
+func (g *Group) Validate() error {
+	if g == nil {
+		return nil
+	}
+	if g.UserUuid == "" {
+		return ErrUserUuidEmpty
+	}
+	if g.Title == "" {
+		return ErrTitleEmpty
+	}
+	return nil
+}
+func (g *Group) GenerateUuid() {
+	g.Uuid = uuid.NewV4().String()
+}
+
+// TODO: Debt field defult value 0
 type Member struct {
-	Id      int     `json:"id"`
-	Uuid    string  `json:"uuid"`
-	GroupId int     `json:"group_id"`
-	Name    string  `json:"name"`
-	Debt    float64 `json:"debt"`
+	// Id      int     `json:"id"`
+	Uuid      string  `json:"uuid"`
+	GroupUuid string  `json:"group_uuid"`
+	Name      string  `json:"name"`
+	Debt      float64 `json:"debt"`
 }
+
+var (
+	ErrGroupUuidEmpty  = errors.New("group_uuid can't be empty")
+	ErrMemberNameEmpty = errors.New("member name can't be empty")
+)
+
+func (m *Member) Validate() error {
+	if m == nil {
+		return nil
+	}
+	if m.GroupUuid == "" {
+		return ErrGroupUuidEmpty
+	}
+	if m.Name == "" {
+		return ErrMemberNameEmpty
+	}
+	m.Debt = 0
+	return nil
+}
+func (m *Member) GenerateUuid() {
+	m.Uuid = uuid.NewV4().String()
+}
+
 type Expense struct {
-	Id             int       `json:"id"`
-	Uuid           string    `json:"uuid"`
-	What           string    `json:"what"`
-	Date           time.Time `json:"date"`
-	Cost           float64   `json:"cost"`
-	PayerId        int       `json:"payer_id"`
-	ParticipantsId []int     `json:"participants_id"`
+	// Id             int       `json:"id"`
+	Uuid             string    `json:"uuid"`
+	GroupUuid        string    `json:"group_uuid"`
+	PayerUuid        string    `json:"payer_uuid"`
+	ParticipantsUuid []string  `json:"participants_uuid"`
+	Item             string    `json:"item"`
+	Date             time.Time `json:"date"`
+	Cost             float64   `json:"cost"`
+}
+
+var (
+	ErrPayerUuidEmpty    = errors.New("payer_uuid can't be empty")
+	ErrParticipantsEmpty = errors.New("participants_uuid can't be empty")
+	ErrItemEmpty         = errors.New("item can't be empty")
+	ErrDateEmpty         = errors.New("date can't be empty")
+	ErrCostEmpty         = errors.New("cost can't be empty")
+)
+
+func (e *Expense) Validate() error {
+	if e == nil {
+		return nil
+	}
+	if e.GroupUuid == "" {
+		return ErrGroupUuidEmpty
+	}
+	if e.PayerUuid == "" {
+		return ErrPayerUuidEmpty
+	}
+	if len(e.ParticipantsUuid) == 0 {
+		return ErrParticipantsEmpty
+	}
+	if e.Item == "" {
+		return ErrItemEmpty
+	}
+	if e.Date.Format("2006-01-02") == "" {
+		return ErrDateEmpty
+	}
+	if e.Cost <= 0 {
+		return ErrCostEmpty
+	}
+	return nil
+}
+func (e *Expense) GenerateUuid() {
+	e.Uuid = uuid.NewV4().String()
 }
